@@ -1,16 +1,45 @@
 import { db } from '../config/firebase';
-import { collection, addDoc, query, where, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  serverTimestamp,
+  deleteDoc
+} from 'firebase/firestore';
+
+/**
+ * Deletes multiple meeting documents from Firestore
+ */
+export const deleteMeetings = async (docIds) => {
+  try {
+    for (const id of docIds) {
+      const docRef = doc(db, 'summaries', id);
+      await deleteDoc(docRef);
+    }
+  } catch (error) {
+    console.error("Firestore Delete Error:", error);
+    throw error;
+  }
+};
 
 /**
  * Saves a meeting note and its summary to Firestore
  */
-export const saveMeetingSummary = async (userId, rawNotes, summary) => {
+export const saveMeetingSummary = async (userId, rawNotes, summary, actionItems = [], title = "Untitled Meeting") => {
   try {
     const docRef = await addDoc(collection(db, 'summaries'), {
       userId,
       rawNotes,
       summary,
-      createdAt: new Date(),
+      actionItems,
+      title,
+      createdAt: serverTimestamp(),
     });
     return docRef.id;
   } catch (error) {
@@ -37,6 +66,8 @@ export const subscribeToUserNotes = (userId, callback) => {
       ...doc.data()
     }));
     callback(notes);
+  }, (error) => {
+    console.error("Firestore Subscribe Error:", error);
   });
 };
 
@@ -53,3 +84,30 @@ export const fetchUserNotes = async (userId) => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
+
+/**
+ * Updates the completion status of a specific action item in a summary document
+ */
+export const updateActionItemStatus = async (docId, actionItems) => {
+  try {
+    const docRef = doc(db, 'summaries', docId);
+    await updateDoc(docRef, { actionItems });
+  } catch (error) {
+    console.error("Error updating action item:", error);
+    throw error;
+  }
+};
+
+/**
+ * Updates the title of a specific meeting document
+ */
+export const updateMeetingTitle = async (docId, title) => {
+  try {
+    const docRef = doc(db, 'summaries', docId);
+    await updateDoc(docRef, { title });
+  } catch (error) {
+    console.error("Error updating title:", error);
+    throw error;
+  }
+};
+

@@ -21,3 +21,25 @@ export const summarizeNotes = async (notes) => {
     throw error;
   }
 };
+
+export const askAgent = async (query, currentMeeting, history) => {
+  try {
+    const response = await fetch(`${API_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, currentMeeting, history }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get answer from agent');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Agent API Error:", error);
+    throw error;
+  }
+};

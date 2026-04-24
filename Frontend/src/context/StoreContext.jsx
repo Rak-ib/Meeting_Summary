@@ -15,6 +15,8 @@ export const StoreProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState(null);
 
   // Auth Listener
   useEffect(() => {
@@ -32,8 +34,15 @@ export const StoreProvider = ({ children }) => {
       return;
     }
 
+    setHistoryLoading(true);
+    setHistoryError(null);
     const unsubscribe = subscribeToUserNotes(user.uid, (notes) => {
       setHistory(notes);
+      setHistoryLoading(false);
+    }, (error) => {
+      console.error("StoreContext: History subscription failed", error);
+      setHistoryError(error.message);
+      setHistoryLoading(false);
     });
 
     return () => unsubscribe();
@@ -51,6 +60,8 @@ export const StoreProvider = ({ children }) => {
     user,
     history,
     loading,
+    historyLoading,
+    historyError,
     login,
     signUpEmail,
     loginEmail,
